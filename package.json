@@ -15,7 +15,7 @@
 	"categories": [
 		"Other"
 	],
-	"icon": "icon/playc.png",
+	"icon": "icon/playc.v1.png",
 	"activationEvents": [
 		"onLanguage:c",
 		"onLanguage:cpp"
