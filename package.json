@@ -1,0 +1,83 @@
+{
+	"name": "playc",
+	"displayName": "PlayC",
+	"description": "PlayC is a simple VS Code extension that solves the biggest pain point for new C/C++ programmers: setting up the compiler. It's built for students, especially those learning in college, who are tired of dealing with complex configurations and old software like Code::Blocks. With PlayC, you get a powerful, modern compiler built-in, so you can stop troubleshooting and start coding.",
+	"version": "1.0.0",
+	"license": "MIT",
+	"engines": {
+		"vscode": "^1.104.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/shuaib-code/playc.git"
+	},
+	"publisher": "shuaib-code",
+	"categories": [
+		"Other"
+	],
+	"icon": "icon/playc.png",
+	"activationEvents": [
+		"onLanguage:c",
+		"onLanguage:cpp"
+	],
+	"main": "./dist/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.runCCode",
+				"title": "Run C/C++ Code",
+				"category": "Code",
+				"icon": {
+					"light": "icon/play1.png",
+					"dark": "icon/play1.png"
+				}
+			}
+		],
+		"menus": {
+			"editor/title": [
+				{
+					"command": "extension.runCCode",
+					"when": "editorLangId == 'c' || editorLangId == 'cpp'",
+					"group": "navigation"
+				}
+			]
+		},
+		"views": {
+			"explorer": [
+				{
+					"id": "runCCodeButton",
+					"name": "Run C/C++",
+					"icon": "icon/play1.png",
+					"command": "extension.runCCode"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"vscode:prepublish": "pnpm run package",
+		"compile": "pnpm run check-types && pnpm run lint && node esbuild.js",
+		"watch": "npm-run-all -p watch:*",
+		"watch:esbuild": "node esbuild.js --watch",
+		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
+		"package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+		"compile-tests": "tsc -p . --outDir out",
+		"watch-tests": "tsc -p . -w --outDir out",
+		"pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
+		"check-types": "tsc --noEmit",
+		"lint": "eslint src",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.104.0",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "22.x",
+		"@typescript-eslint/eslint-plugin": "^8.42.0",
+		"@typescript-eslint/parser": "^8.42.0",
+		"eslint": "^9.34.0",
+		"esbuild": "^0.25.9",
+		"npm-run-all": "^4.1.5",
+		"typescript": "^5.9.2",
+		"@vscode/test-cli": "^0.0.11",
+		"@vscode/test-electron": "^2.5.2"
+	}
+}
