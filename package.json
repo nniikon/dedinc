@@ -2,7 +2,7 @@
 	"name": "playc",
 	"displayName": "PlayC",
 	"description": "PlayC is a simple VS Code extension that solves the biggest pain point for new C/C++ programmers: setting up the compiler. It's built for students, especially those learning in college, who are tired of dealing with complex configurations and old software like Code::Blocks. With PlayC, you get a powerful, modern compiler built-in, so you can stop troubleshooting and start coding.",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^1.104.0"

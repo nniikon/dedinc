@@ -26,14 +26,9 @@ PlayC is a Visual Studio Code extension designed to streamline compiling and run
 
 ## Release Notes
 
-### 0.0.1
+### 1.0.1
 
-- Initial release with compile and run functionality for C/C++ code.
-- Included TDM-GCC for Windows users.
-
-### 0.0.2
-
-- Fixed terminal focus issue after the first run.
+- Reduced file size
 
 ## Installation
 
