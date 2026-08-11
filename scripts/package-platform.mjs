@@ -42,11 +42,32 @@ if (unwantedTargets.length > 0) {
 const outputDirectory = join(root, "artifacts");
 mkdirSync(outputDirectory, { recursive: true });
 const outputPath = join(outputDirectory, `${packageJson.name}-${packageJson.version}-${target}.vsix`);
-const command = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+const pnpmArguments = [
+	"dlx",
+	"@vscode/vsce@3.6.2",
+	"package",
+	"--target",
+	target,
+	"--out",
+	outputPath,
+];
+const pnpmEntryPoint = process.env.npm_execpath;
+const command = pnpmEntryPoint
+	? process.execPath
+	: process.platform === "win32"
+		? "pnpm.cmd"
+		: "pnpm";
+const commandArguments = pnpmEntryPoint
+	? [pnpmEntryPoint, ...pnpmArguments]
+	: pnpmArguments;
 const result = spawnSync(
 	command,
-	["dlx", "@vscode/vsce@3.6.2", "package", "--target", target, "--out", outputPath],
-	{ cwd: root, stdio: "inherit" }
+	commandArguments,
+	{
+		cwd: root,
+		stdio: "inherit",
+		shell: !pnpmEntryPoint && process.platform === "win32",
+	}
 );
 if (result.error) {
 	console.error(`Could not start the VSIX packager: ${result.error.message}`);
