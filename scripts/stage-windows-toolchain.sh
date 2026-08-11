@@ -22,7 +22,7 @@ printf '#include <iostream>\nint main() { std::cout << "DedInC"; }\n' > "$smoke_
 "$destination/bin/g++.exe" \
 	-B "$destination/bin/" \
 	-B "$destination/lib/" \
-	-isystem "$destination/include" \
+	-idirafter "$destination/include" \
 	-L "$destination/lib" \
 	"$smoke_dir/smoke.cpp" \
 	-o "$smoke_dir/smoke.exe" \

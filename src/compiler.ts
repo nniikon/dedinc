@@ -61,7 +61,7 @@ export function resolveCompiler(
 			`${binDirectory}${pathApi.sep}`,
 			"-B",
 			`${libraryDirectory}${pathApi.sep}`,
-			"-isystem",
+			"-idirafter",
 			includeDirectory,
 			"-L",
 			libraryDirectory,
