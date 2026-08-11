@@ -4,14 +4,13 @@ This directory contains generated compiler payloads during packaging. Only this
 README is tracked.
 
 - `win32-x64/` is a staged MSYS2 UCRT64 GCC 16.2 toolchain.
-- `linux-x64/` is a relocatable GCC 16.1 toolchain built on glibc 2.17.
 - `darwin-arm64` has no payload; DedInC invokes Apple Command Line Tools through
   `xcrun`.
 
 Run the matching preparation script, then:
 
 ```sh
-pnpm package:platform -- linux-x64
+pnpm package:platform -- win32-x64
 ```
 
 The packaging command rejects missing or unrelated payloads so a VSIX cannot

@@ -6,8 +6,8 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [1.1.0]
 
-- Added Windows x64, Linux x64, and macOS ARM64 compiler resolution.
-- Added bundled GCC platform packaging for Windows and Linux.
+- Added Windows x64 and macOS ARM64 compiler resolution.
+- Added bundled GCC platform packaging for Windows.
 - Added automatic Apple Command Line Tools setup on macOS.
 - Added configurable `dedinc.compilerFlags` with learning-friendly defaults.
 - Renamed the extension to DedInC for the standalone fork.

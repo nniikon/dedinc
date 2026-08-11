@@ -7,7 +7,7 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const root = join(scriptDirectory, "..");
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 
-const supportedTargets = ["win32-x64", "linux-x64", "darwin-arm64"];
+const supportedTargets = ["win32-x64", "darwin-arm64"];
 const target = process.argv.slice(2).find((argument) => argument !== "--");
 if (!supportedTargets.includes(target)) {
 	console.error(`Usage: pnpm package:platform -- <${supportedTargets.join("|")}>`);

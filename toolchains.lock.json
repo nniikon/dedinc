@@ -1,17 +1,4 @@
 {
-  "linux-x64": {
-    "gcc": {
-      "version": "16.1.0",
-      "url": "https://gcc.gnu.org/pub/gcc/releases/gcc-16.1.0/gcc-16.1.0.tar.xz",
-      "sha512": "b3454958891ab47e1e5b6cb9396c0ad3b04f32fe2a7bf1153a143f21013fdb6b295ca94c98964698a688e4c1d7555ffd8ffbc20187507cce6b1c32cbcc09897a"
-    },
-    "binutils": {
-      "version": "2.45",
-      "url": "https://sourceware.org/pub/binutils/releases/binutils-2.45.tar.xz",
-      "sha256": "c50c0e7f9cb188980e2cc97e4537626b1672441815587f1eab69d2a1bfbef5d2"
-    },
-    "glibcBaseline": "2.17"
-  },
   "win32-x64": {
     "distribution": "MSYS2 UCRT64",
     "package": "mingw-w64-ucrt-x86_64-gcc",

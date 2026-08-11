@@ -10,21 +10,17 @@ import {
 suite("Compiler configuration", () => {
 	test("resolves supported targets", () => {
 		assert.strictEqual(resolveTarget("win32", "x64"), "win32-x64");
-		assert.strictEqual(resolveTarget("linux", "x64"), "linux-x64");
 		assert.strictEqual(resolveTarget("darwin", "arm64"), "darwin-arm64");
+		assert.strictEqual(resolveTarget("linux", "x64"), undefined);
 		assert.strictEqual(resolveTarget("linux", "arm64"), undefined);
 		assert.strictEqual(resolveTarget("darwin", "x64"), undefined);
 	});
 
-	test("uses packaged compilers on Windows and Linux", () => {
+	test("uses a packaged compiler on Windows", () => {
 		const windows = resolveCompiler("/extension", "win32", "x64");
 		assert.strictEqual(windows.bundled, true);
 		assert.strictEqual(path.basename(windows.command), "g++.exe");
 		assert.deepStrictEqual(windows.runtimeArgs, ["-static-libgcc", "-static-libstdc++"]);
-
-		const linux = resolveCompiler("/extension", "linux", "x64");
-		assert.strictEqual(linux.bundled, true);
-		assert.strictEqual(path.basename(linux.command), "g++");
 	});
 
 	test("uses xcrun clang++ on Apple Silicon", () => {
@@ -43,7 +39,7 @@ suite("Compiler configuration", () => {
 	});
 
 	test("builds argument arrays without shell quoting", () => {
-		const compiler = resolveCompiler("/extension with spaces", "linux", "x64");
+		const compiler = resolveCompiler("C:\\extension with spaces", "win32", "x64");
 		assert.deepStrictEqual(
 			buildCompilerArgs(
 				compiler,
@@ -65,7 +61,7 @@ suite("Compiler configuration", () => {
 	});
 
 	test("uses platform-specific output names", () => {
-		assert.strictEqual(outputPathFor("/project/main.cpp", "linux"), "/project/_run_DedInC");
+		assert.strictEqual(outputPathFor("/project/main.cpp", "darwin"), "/project/_run_DedInC");
 		assert.strictEqual(
 			outputPathFor("C:\\project\\main.cpp", "win32"),
 			"C:\\project\\_run_DedInC.exe"
@@ -73,7 +69,7 @@ suite("Compiler configuration", () => {
 	});
 
 	test("allows an empty optional flags array", () => {
-		const compiler = resolveCompiler("/extension", "linux", "x64");
+		const compiler = resolveCompiler("C:\\extension", "win32", "x64");
 		assert.deepStrictEqual(buildCompilerArgs(compiler, "/p/a.c", "/p/out", []), [
 			"/p/a.c",
 			"-o",

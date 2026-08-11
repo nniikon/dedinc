@@ -8,7 +8,6 @@ input and output remain in VS Code's integrated terminal.
 | Platform | Compiler |
 | --- | --- |
 | Windows x64 | Bundled GCC/MinGW-w64 `g++` |
-| Linux x64 | Bundled GCC `g++` |
 | macOS ARM64 | Apple `clang++` from Command Line Tools |
 
 Installations from the VS Code Marketplace automatically receive the matching
@@ -23,8 +22,8 @@ Both `.c` and `.cpp` files are intentionally compiled as C++.
 2. Click **Run C/C++ Code** in the editor toolbar.
 3. Use the DedInC task terminal for program input and output.
 
-The generated program is `_run_DedInC.exe` on Windows and `_run_DedInC` on Linux
-and macOS, alongside the source file.
+The generated program is `_run_DedInC.exe` on Windows and `_run_DedInC` on
+macOS, alongside the source file.
 
 ## Compiler flags
 
@@ -50,13 +49,13 @@ pnpm test
 pnpm package:platform -- darwin-arm64
 ```
 
-Windows and Linux packages require the matching generated directory under
-`toolchains/`. See [toolchains/README.md](toolchains/README.md). Release builds
+Windows packages require the generated directory under `toolchains/`. See
+[toolchains/README.md](toolchains/README.md). Release builds
 are defined in `.github/workflows/release-platforms.yml`.
 
 ## Current limitations
 
-- Only Windows x64, Linux x64, and macOS ARM64 are supported.
+- Only Windows x64 and macOS ARM64 are supported.
 - DedInC compiles one active source file; it does not replace a multi-file build
   system such as CMake or Make.
 - Unsaved editor changes are not compiled until the file is saved.
