@@ -4,6 +4,10 @@
 	"description": "DedInC compiles and runs C and C++ files with one click using an included cross-platform toolchain.",
 	"version": "1.1.0",
 	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/nniikon/dedinc.git"
+	},
 	"engines": {
 		"vscode": "^1.104.0"
 	},
