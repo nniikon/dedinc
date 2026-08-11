@@ -1,0 +1,123 @@
+name: Build platform VSIX packages
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: xvfb-run --auto-servernum pnpm test
+
+  linux-x64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build GCC on the glibc 2.17 baseline
+        run: |
+          docker run --rm -v "$PWD:/work" -w /work quay.io/pypa/manylinux2014_x86_64 \
+            bash -lc 'yum install -y bzip2 diffutils gcc gcc-c++ make tar xz && scripts/build-linux-toolchain.sh && chmod -R a+rwX toolchains/linux-x64'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm package:platform -- linux-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dedinc-linux-x64
+          path: artifacts/*.vsix
+
+  win32-x64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: mingw-w64-ucrt-x86_64-gcc
+      - name: Stage MinGW-w64 GCC
+        shell: msys2 {0}
+        run: scripts/stage-windows-toolchain.sh
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm package:platform -- win32-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dedinc-win32-x64
+          path: artifacts/*.vsix
+
+  darwin-arm64:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Smoke-test Apple clang++
+        run: |
+          printf '#include <iostream>\nint main() { std::cout << "DedInC"; }\n' > "$RUNNER_TEMP/dedinc-smoke.cpp"
+          xcrun clang++ "$RUNNER_TEMP/dedinc-smoke.cpp" -o "$RUNNER_TEMP/dedinc-smoke"
+          test "$("$RUNNER_TEMP/dedinc-smoke")" = DedInC
+      - run: pnpm package:platform -- darwin-arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dedinc-darwin-arm64
+          path: artifacts/*.vsix
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [verify, linux-x64, win32-x64, darwin-arm64]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dedinc-*
+          path: artifacts
+          merge-multiple: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Publish platform packages
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          for package in artifacts/*.vsix; do
+            pnpm dlx @vscode/vsce@3.6.2 publish --packagePath "$package"
+          done

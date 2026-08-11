@@ -2,4 +2,8 @@ node_modules
 tdm
 dist
 visx
+artifacts
+toolchains/*
+!toolchains/README.md
+!toolchains.lock.json
 vsc-extension-quickstart.md

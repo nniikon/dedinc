@@ -12,3 +12,8 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
+scripts/**
+.github/**
+artifacts/**
+toolchains/README.md
+toolchains.lock.json

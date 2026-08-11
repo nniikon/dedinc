@@ -1,53 +1,62 @@
-# PlayC - Run C/C++ Code in VS Code
+# DedInC — Run C/C++ Code in VS Code
 
-PlayC is a Visual Studio Code extension designed to streamline compiling and running C and C++ programs directly within the editor. It comes with a bundled compiler, removing the need for manual setup.
+DedInC compiles and runs the active C or C++ source file with one click. Program
+input and output remain in VS Code's integrated terminal.
 
-## Features
+## Supported platforms
 
-- **One-click Compile & Run**: Run your C/C++ code with a single click.
-- **Integrated Terminal**: View input and output directly in the VS Code terminal.
-- **No Setup Required**: Includes a bundled compiler for hassle-free use.
-- **Cross-Platform**: Compatible with Windows, macOS, and Linux.
+| Platform | Compiler |
+| --- | --- |
+| Windows x64 | Bundled GCC/MinGW-w64 `g++` |
+| Linux x64 | Bundled GCC `g++` |
+| macOS ARM64 | Apple `clang++` from Command Line Tools |
 
-## Requirements
+Installations from the VS Code Marketplace automatically receive the matching
+platform package. On macOS, DedInC opens Apple's Command Line Tools installer on
+the first run if necessary. Complete that installation and click Run again.
 
-- Visual Studio Code installed.
-- A C or C++ file open in the editor.
-- No external compiler setup required, as PlayC includes a bundled compiler.
-
-## Extension Settings
-
-> **Note**: PlayC currently does not offer configuration options. Customizable settings may be added in future updates.
-
-## Known Issues
-
-- Optimized for Windows with the bundled MinGW compiler. Other platforms may require a manually installed compiler.
-- Terminal focus may not function correctly on the first run.
-
-## Release Notes
-
-### 1.0.1
-
-- Reduced file size
-
-## Installation
-
-1. Install Visual Studio Code from [code.visualstudio.com](https://code.visualstudio.com/).
-2. Open VS Code, go to the Extensions view (`Ctrl+Shift+X`), and search for **PlayC**.
-3. Click **Install**.
-
-### Manual Installation via .vsix
-
-1. Download the `.vsix` file from the release page.
-2. In VS Code, navigate to **Extensions > Install from VSIX**.
-3. Select the downloaded `.vsix` file.
+Both `.c` and `.cpp` files are intentionally compiled as C++.
 
 ## Usage
 
-1. Open a C or C++ file in the VS Code editor.
-2. Click the **Run C/C++** button in the editor's toolbar.
-3. View the output in the integrated terminal.
+1. Open a `.c` or `.cpp` file.
+2. Click **Run C/C++ Code** in the editor toolbar.
+3. Use the DedInC task terminal for program input and output.
 
----
+The generated program is `_run_DedInC.exe` on Windows and `_run_DedInC` on Linux
+and macOS, alongside the source file.
 
-**Enjoy coding with PlayC! 🎉**
+## Compiler flags
+
+Set `dedinc.compilerFlags` at user, workspace, or workspace-folder scope. Each
+array entry is passed as exactly one compiler argument, so flags containing
+spaces do not require shell escaping.
+
+```json
+{
+  "dedinc.compilerFlags": ["-Wall", "-Wextra", "-g", "-std=c++23"]
+}
+```
+
+The default is `-Wall`, `-Wextra`, and `-g`. Set the value to `[]` to pass no
+optional flags. The configured array replaces the defaults rather than being
+appended to them.
+
+## Development and packaging
+
+```sh
+pnpm install
+pnpm test
+pnpm package:platform -- darwin-arm64
+```
+
+Windows and Linux packages require the matching generated directory under
+`toolchains/`. See [toolchains/README.md](toolchains/README.md). Release builds
+are defined in `.github/workflows/release-platforms.yml`.
+
+## Current limitations
+
+- Only Windows x64, Linux x64, and macOS ARM64 are supported.
+- DedInC compiles one active source file; it does not replace a multi-file build
+  system such as CMake or Make.
+- Unsaved editor changes are not compiled until the file is saved.

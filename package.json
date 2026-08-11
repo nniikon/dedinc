@@ -1,17 +1,13 @@
 {
-	"name": "playc",
-	"displayName": "PlayC",
-	"description": "PlayC is a simple VS Code extension that solves the biggest pain point for new C/C++ programmers: setting up the compiler. It's built for students, especially those learning in college, who are tired of dealing with complex configurations and old software like Code::Blocks. With PlayC, you get a powerful, modern compiler built-in, so you can stop troubleshooting and start coding.",
-	"version": "1.0.1",
+	"name": "dedinc",
+	"displayName": "DedInC",
+	"description": "DedInC compiles and runs C and C++ files with one click using an included cross-platform toolchain.",
+	"version": "1.1.0",
 	"license": "MIT",
 	"engines": {
 		"vscode": "^1.104.0"
 	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/shuaib-code/playc.git"
-	},
-	"publisher": "shuaib-code",
+	"publisher": "dedinc",
 	"categories": [
 		"Other"
 	],
@@ -22,9 +18,27 @@
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
+		"configuration": {
+			"title": "DedInC",
+			"properties": {
+				"dedinc.compilerFlags": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"default": [
+						"-Wall",
+						"-Wextra",
+						"-g"
+					],
+					"scope": "resource",
+					"markdownDescription": "Arguments passed to the bundled `g++` compiler (or Apple `clang++`). Both C and C++ files are compiled as C++."
+				}
+			}
+		},
 		"commands": [
 			{
-				"command": "extension.runCCode",
+				"command": "dedinc.runCCode",
 				"title": "Run C/C++ Code",
 				"category": "Code",
 				"icon": {
@@ -36,7 +50,7 @@
 		"menus": {
 			"editor/title": [
 				{
-					"command": "extension.runCCode",
+					"command": "dedinc.runCCode",
 					"when": "editorLangId == 'c' || editorLangId == 'cpp'",
 					"group": "navigation"
 				}
@@ -48,7 +62,7 @@
 					"id": "runCCodeButton",
 					"name": "Run C/C++",
 					"icon": "icon/play1.png",
-					"command": "extension.runCCode"
+					"command": "dedinc.runCCode"
 				}
 			]
 		}
@@ -60,6 +74,7 @@
 		"watch:esbuild": "node esbuild.js --watch",
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
 		"package": "pnpm run check-types && pnpm run lint && node esbuild.js --production",
+		"package:platform": "node scripts/package-platform.mjs",
 		"compile-tests": "tsc -p . --outDir out",
 		"watch-tests": "tsc -p . -w --outDir out",
 		"pretest": "pnpm run compile-tests && pnpm run compile && pnpm run lint",
