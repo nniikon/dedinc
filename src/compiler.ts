@@ -47,11 +47,26 @@ export function resolveCompiler(
 		};
 	}
 
+	const pathApi = platform === "win32" ? path.win32 : path.posix;
+	const toolchainRoot = pathApi.join(extensionPath, "toolchains", target);
+	const binDirectory = pathApi.join(toolchainRoot, "bin");
+	const libraryDirectory = pathApi.join(toolchainRoot, "lib");
+	const includeDirectory = pathApi.join(toolchainRoot, "include");
 	const executable = target === "win32-x64" ? "g++.exe" : "g++";
 	return {
-		command: path.join(extensionPath, "toolchains", target, "bin", executable),
+		command: pathApi.join(binDirectory, executable),
 		prefixArgs: [],
-		runtimeArgs: ["-static-libgcc", "-static-libstdc++"],
+		runtimeArgs: [
+			"-B",
+			`${binDirectory}${pathApi.sep}`,
+			"-B",
+			`${libraryDirectory}${pathApi.sep}`,
+			"-isystem",
+			includeDirectory,
+			"-L",
+			libraryDirectory,
+			"-static",
+		],
 		target,
 		bundled: true,
 	};

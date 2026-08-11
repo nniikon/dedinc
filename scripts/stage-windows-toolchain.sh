@@ -19,5 +19,13 @@ cp -a /ucrt64/. "$destination/"
 smoke_dir=$(mktemp -d)
 trap 'rm -rf "$smoke_dir"' EXIT
 printf '#include <iostream>\nint main() { std::cout << "DedInC"; }\n' > "$smoke_dir/smoke.cpp"
-"$destination/bin/g++.exe" "$smoke_dir/smoke.cpp" -o "$smoke_dir/smoke.exe" -static-libgcc -static-libstdc++
-[[ "$("$smoke_dir/smoke.exe")" == "DedInC" ]]
+"$destination/bin/g++.exe" \
+	-B "$destination/bin/" \
+	-B "$destination/lib/" \
+	-isystem "$destination/include" \
+	-L "$destination/lib" \
+	"$smoke_dir/smoke.cpp" \
+	-o "$smoke_dir/smoke.exe" \
+	-static
+smoke_output=$(PATH=/usr/bin:/bin "$smoke_dir/smoke.exe")
+[[ "$smoke_output" == "DedInC" ]]

@@ -17,10 +17,20 @@ suite("Compiler configuration", () => {
 	});
 
 	test("uses a packaged compiler on Windows", () => {
-		const windows = resolveCompiler("/extension", "win32", "x64");
+		const windows = resolveCompiler("C:\\extension", "win32", "x64");
 		assert.strictEqual(windows.bundled, true);
-		assert.strictEqual(path.basename(windows.command), "g++.exe");
-		assert.deepStrictEqual(windows.runtimeArgs, ["-static-libgcc", "-static-libstdc++"]);
+		assert.strictEqual(path.win32.basename(windows.command), "g++.exe");
+		assert.deepStrictEqual(windows.runtimeArgs, [
+			"-B",
+			"C:\\extension\\toolchains\\win32-x64\\bin\\",
+			"-B",
+			"C:\\extension\\toolchains\\win32-x64\\lib\\",
+			"-isystem",
+			"C:\\extension\\toolchains\\win32-x64\\include",
+			"-L",
+			"C:\\extension\\toolchains\\win32-x64\\lib",
+			"-static",
+		]);
 	});
 
 	test("uses xcrun clang++ on Apple Silicon", () => {
@@ -54,8 +64,15 @@ suite("Compiler configuration", () => {
 				"-Wall",
 				"-DFOO=hello world",
 				"-lm",
-				"-static-libgcc",
-				"-static-libstdc++",
+				"-B",
+				"C:\\extension with spaces\\toolchains\\win32-x64\\bin\\",
+				"-B",
+				"C:\\extension with spaces\\toolchains\\win32-x64\\lib\\",
+				"-isystem",
+				"C:\\extension with spaces\\toolchains\\win32-x64\\include",
+				"-L",
+				"C:\\extension with spaces\\toolchains\\win32-x64\\lib",
+				"-static",
 			]
 		);
 	});
@@ -74,8 +91,15 @@ suite("Compiler configuration", () => {
 			"/p/a.c",
 			"-o",
 			"/p/out",
-			"-static-libgcc",
-			"-static-libstdc++",
+			"-B",
+			"C:\\extension\\toolchains\\win32-x64\\bin\\",
+			"-B",
+			"C:\\extension\\toolchains\\win32-x64\\lib\\",
+			"-isystem",
+			"C:\\extension\\toolchains\\win32-x64\\include",
+			"-L",
+			"C:\\extension\\toolchains\\win32-x64\\lib",
+			"-static",
 		]);
 	});
 });
