@@ -3,7 +3,7 @@
 This directory contains generated compiler payloads during packaging. Only this
 README is tracked.
 
-- `win32-x64/` is a staged MSYS2 UCRT64 GCC 16.1 toolchain.
+- `win32-x64/` is a staged MSYS2 UCRT64 GCC 16.2 toolchain.
 - `linux-x64/` is a relocatable GCC 16.1 toolchain built on glibc 2.17.
 - `darwin-arm64` has no payload; DedInC invokes Apple Command Line Tools through
   `xcrun`.

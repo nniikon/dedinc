@@ -6,7 +6,7 @@ set -euo pipefail
 # headers, linker, standard library, and runtime DLLs together.
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 destination="$repo_root/toolchains/win32-x64"
-expected_version=16.1.0-5
+expected_version=16.2.0-3
 installed_version=$(pacman -Q mingw-w64-ucrt-x86_64-gcc | awk '{print $2}')
 if [[ "$installed_version" != "$expected_version" ]]; then
 	echo "Expected mingw-w64-ucrt-x86_64-gcc $expected_version, found $installed_version." >&2

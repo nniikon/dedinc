@@ -10,7 +10,7 @@ GCC runtime libraries include the GCC Runtime Library Exception. Exact license
 files and corresponding-source locations must be copied into each generated
 toolchain payload by the release workflow before publication.
 
-- GCC source: https://gcc.gnu.org/pub/gcc/releases/gcc-16.1.0/
+- Linux GCC source: https://gcc.gnu.org/pub/gcc/releases/gcc-16.1.0/
 - Binutils source: https://sourceware.org/pub/binutils/releases/
 - MSYS2 package sources: https://packages.msys2.org/
 
