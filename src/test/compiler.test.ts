@@ -2,6 +2,7 @@ import * as assert from "assert";
 import * as path from "path";
 import {
 	buildCompilerArgs,
+	buildCompilerEnvironment,
 	outputPathFor,
 	resolveCompiler,
 	resolveTarget,
@@ -101,5 +102,26 @@ suite("Compiler configuration", () => {
 			"C:\\extension\\toolchains\\win32-x64\\lib",
 			"-static",
 		]);
+	});
+
+	test("adds the bundled compiler directory to the Windows PATH", () => {
+		const compiler = resolveCompiler("C:\\extension", "win32", "x64");
+		const environment = buildCompilerEnvironment(
+			compiler,
+			{ Path: "C:\\Windows\\System32", TEMP: "C:\\Temp" },
+			"win32"
+		);
+
+		assert.strictEqual(
+			environment.Path,
+			"C:\\extension\\toolchains\\win32-x64\\bin;C:\\Windows\\System32"
+		);
+		assert.strictEqual(environment.TEMP, "C:\\Temp");
+	});
+
+	test("does not modify the environment for a system compiler", () => {
+		const compiler = resolveCompiler("/extension", "darwin", "arm64");
+		const baseEnvironment = { PATH: "/usr/bin" };
+		assert.strictEqual(buildCompilerEnvironment(compiler, baseEnvironment, "darwin"), baseEnvironment);
 	});
 });

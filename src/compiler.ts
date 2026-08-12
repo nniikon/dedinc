@@ -93,3 +93,23 @@ export function buildCompilerArgs(
 		...invocation.runtimeArgs,
 	];
 }
+
+export function buildCompilerEnvironment(
+	invocation: CompilerInvocation,
+	baseEnvironment: NodeJS.ProcessEnv = process.env,
+	platform: NodeJS.Platform = process.platform
+): NodeJS.ProcessEnv {
+	if (!invocation.bundled) {
+		return baseEnvironment;
+	}
+
+	const environment = { ...baseEnvironment };
+	const pathKey = Object.keys(environment).find((key) => key.toLowerCase() === "path") ?? "PATH";
+	const pathApi = platform === "win32" ? path.win32 : path.posix;
+	const delimiter = platform === "win32" ? ";" : ":";
+	const compilerBin = pathApi.dirname(invocation.command);
+	environment[pathKey] = environment[pathKey]
+		? `${compilerBin}${delimiter}${environment[pathKey]}`
+		: compilerBin;
+	return environment;
+}

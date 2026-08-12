@@ -25,6 +25,11 @@ Both `.c` and `.cpp` files are intentionally compiled as C++.
 The generated program is `_run_DedInC.exe` on Windows and `_run_DedInC` on
 macOS, alongside the source file.
 
+If compilation fails, select **Show Diagnostics** in the error notification (or
+open **View: Toggle Output** and choose **DedInC**). The report includes the
+compiler path, working directory, exact argument array, captured output, exit
+status, and—on Windows—toolchain component lookup probes.
+
 ## Compiler flags
 
 Set `dedinc.compilerFlags` at user, workspace, or workspace-folder scope. Each

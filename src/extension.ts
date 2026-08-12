@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 import * as fs from "fs";
 import {
 	buildCompilerArgs,
+	buildCompilerEnvironment,
 	DEFAULT_COMPILER_FLAGS,
 	outputPathFor,
 	resolveCompiler,
@@ -17,18 +18,100 @@ let compilationInProgress = false;
 function runProcess(
 	command: string,
 	args: readonly string[],
-	cwd: string
-): Promise<{ code: number | null; stdout: string; stderr: string }> {
+	cwd: string,
+	env: NodeJS.ProcessEnv = process.env
+): Promise<{ code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string }> {
 	return new Promise((resolve, reject) => {
-		const child = spawn(command, [...args], { cwd, windowsHide: true });
+		const child = spawn(command, [...args], { cwd, env, windowsHide: true });
 		let stdout = "";
 		let stderr = "";
 
 		child.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString()));
 		child.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString()));
 		child.once("error", reject);
-		child.once("close", (code) => resolve({ code, stdout, stderr }));
+		child.once("close", (code, signal) => resolve({ code, signal, stdout, stderr }));
 	});
+}
+
+function runCompilerProcess(
+	invocation: CompilerInvocation,
+	args: readonly string[],
+	cwd: string
+): Promise<{ code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string }> {
+	return runProcess(invocation.command, args, cwd, buildCompilerEnvironment(invocation));
+}
+
+function diagnosticValue(value: string): string {
+	return value.length > 0 ? value.trimEnd() : "<empty>";
+}
+
+async function appendCompilerDiagnostics(
+	invocation: CompilerInvocation,
+	args: readonly string[],
+	cwd: string,
+	result?: { code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string },
+	error?: unknown
+): Promise<void> {
+	outputChannel.appendLine("");
+	outputChannel.appendLine("=== DedInC compilation diagnostics ===");
+	outputChannel.appendLine(`Platform: ${process.platform}-${process.arch}`);
+	outputChannel.appendLine(`VS Code: ${vscode.version}`);
+	outputChannel.appendLine(`Compiler: ${invocation.command}`);
+	outputChannel.appendLine(`Compiler exists: ${fs.existsSync(invocation.command)}`);
+	outputChannel.appendLine(
+		`Bundled compiler bin added to PATH: ${invocation.bundled ? path.dirname(invocation.command) : "not applicable"}`
+	);
+	outputChannel.appendLine(`Working directory: ${cwd}`);
+	outputChannel.appendLine(`Working directory exists: ${fs.existsSync(cwd)}`);
+	outputChannel.appendLine(`Arguments: ${JSON.stringify(args, null, 2)}`);
+	if (result) {
+		outputChannel.appendLine(`Exit code: ${result.code ?? "null"}`);
+		outputChannel.appendLine(`Signal: ${result.signal ?? "none"}`);
+		outputChannel.appendLine(`stdout: ${diagnosticValue(result.stdout)}`);
+		outputChannel.appendLine(`stderr: ${diagnosticValue(result.stderr)}`);
+	}
+	if (error) {
+		const processError = error as NodeJS.ErrnoException;
+		outputChannel.appendLine(`Process error: ${processError.stack ?? String(error)}`);
+		outputChannel.appendLine(`Process error code: ${processError.code ?? "none"}`);
+	}
+
+	if (!invocation.bundled) {
+		return;
+	}
+
+	outputChannel.appendLine("");
+	outputChannel.appendLine("--- Bundled compiler self-test ---");
+	for (const probeArgs of [
+		["--version"],
+		["-print-search-dirs"],
+		["-print-prog-name=cc1plus"],
+		["-print-prog-name=as"],
+		["-print-prog-name=ld"],
+	]) {
+		try {
+			const probe = await runCompilerProcess(invocation, probeArgs, cwd);
+			outputChannel.appendLine(`$ g++ ${probeArgs.join(" ")}`);
+			outputChannel.appendLine(`exit=${probe.code ?? "null"}, signal=${probe.signal ?? "none"}`);
+			if (probe.stdout) {
+				outputChannel.appendLine(`stdout: ${diagnosticValue(probe.stdout)}`);
+			}
+			if (probe.stderr) {
+				outputChannel.appendLine(`stderr: ${diagnosticValue(probe.stderr)}`);
+			}
+		} catch (probeError) {
+			outputChannel.appendLine(`$ g++ ${probeArgs.join(" ")}`);
+			outputChannel.appendLine(`could not start: ${(probeError as Error).message}`);
+		}
+	}
+}
+
+async function showCompilationFailure(message: string): Promise<void> {
+	outputChannel.show(true);
+	const action = await vscode.window.showErrorMessage(message, "Show Diagnostics");
+	if (action === "Show Diagnostics") {
+		outputChannel.show(false);
+	}
 }
 
 async function ensureCompiler(invocation: CompilerInvocation): Promise<boolean> {
@@ -184,7 +267,7 @@ async function runCCode(context: vscode.ExtensionContext): Promise<void> {
 		outputChannel.appendLine(`Compiling ${path.basename(sourcePath)}...`);
 		const result = await vscode.window.withProgress(
 			{ location: vscode.ProgressLocation.Notification, title: "DedInC: Compiling" },
-			() => runProcess(compiler.command, args, cwd)
+			() => runCompilerProcess(compiler, args, cwd)
 		);
 		if (result.stdout) {
 			outputChannel.append(result.stdout);
@@ -193,15 +276,16 @@ async function runCCode(context: vscode.ExtensionContext): Promise<void> {
 			outputChannel.append(result.stderr);
 		}
 		if (result.code !== 0 || !fs.existsSync(outputPath)) {
-			outputChannel.show(true);
-			vscode.window.showErrorMessage(`Compilation failed (exit code ${result.code ?? "unknown"}).`);
+			await appendCompilerDiagnostics(compiler, args, cwd, result);
+			await showCompilationFailure(
+				`Compilation failed (exit code ${result.code ?? "unknown"}). See the DedInC output for diagnostics.`
+			);
 			return;
 		}
 		await executeProgram(sourcePath, outputPath);
 	} catch (error) {
-		outputChannel.appendLine(String(error));
-		outputChannel.show(true);
-		vscode.window.showErrorMessage(`DedInC failed: ${(error as Error).message}`);
+		await appendCompilerDiagnostics(compiler, args, cwd, undefined, error);
+		await showCompilationFailure(`DedInC failed: ${(error as Error).message}`);
 	} finally {
 		compilationInProgress = false;
 	}

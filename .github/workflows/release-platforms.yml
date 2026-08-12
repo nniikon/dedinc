@@ -36,6 +36,22 @@ jobs:
       - name: Stage MinGW-w64 GCC
         shell: msys2 {0}
         run: scripts/stage-windows-toolchain.sh
+      - name: Smoke-test bundled GCC from Windows
+        shell: pwsh
+        run: |
+          $toolchain = Join-Path $PWD "toolchains\win32-x64"
+          $bin = Join-Path $toolchain "bin"
+          $lib = Join-Path $toolchain "lib"
+          $include = Join-Path $toolchain "include"
+          $compiler = Join-Path $bin "g++.exe"
+          $source = Join-Path $env:RUNNER_TEMP "dedinc-windows-smoke.cpp"
+          $executable = Join-Path $env:RUNNER_TEMP "dedinc-windows-smoke.exe"
+          Set-Content -Path $source -Value '#include <iostream>', 'int main() { std::cout << "DedInC"; }'
+          $env:Path = "$bin;$env:Path"
+          & $compiler -B "$bin\" -B "$lib\" -idirafter $include -L $lib $source -o $executable -static
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $output = & $executable
+          if ($LASTEXITCODE -ne 0 -or $output -ne "DedInC") { exit 1 }
       - uses: pnpm/action-setup@v4
         with:
           version: 10
