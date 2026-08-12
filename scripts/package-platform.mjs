@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -6,6 +7,7 @@ import { spawnSync } from "node:child_process";
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const root = join(scriptDirectory, "..");
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+const toolchainsLock = JSON.parse(readFileSync(join(root, "toolchains.lock.json"), "utf8"));
 
 const supportedTargets = ["win32-x64", "darwin-arm64"];
 const target = process.argv.slice(2).find((argument) => argument !== "--");
@@ -31,6 +33,29 @@ if (target !== "darwin-arm64") {
 	if (!existsSync(compilerPath)) {
 		console.error(`Missing staged compiler executable: ${compilerPath}`);
 		process.exit(1);
+	}
+	const requiredPayloadFiles = [
+		{
+			path: join(toolchainsRoot, target, "include", "TXLib.h"),
+			sha256: toolchainsLock[target].txlib.headerSha256,
+		},
+		{
+			path: join(toolchainsRoot, target, "share", "licenses", "txlib", "License.txt"),
+			sha256: toolchainsLock[target].txlib.licenseSha256,
+		},
+	];
+	for (const requiredFile of requiredPayloadFiles) {
+		if (!existsSync(requiredFile.path)) {
+			console.error(`Missing staged Windows payload file: ${requiredFile.path}`);
+			process.exit(1);
+		}
+		const actualSha256 = createHash("sha256")
+			.update(readFileSync(requiredFile.path))
+			.digest("hex");
+		if (actualSha256 !== requiredFile.sha256) {
+			console.error(`Checksum mismatch for staged Windows payload file: ${requiredFile.path}`);
+			process.exit(1);
+		}
 	}
 }
 const unwantedTargets = stagedTargets.filter((name) => name !== target);

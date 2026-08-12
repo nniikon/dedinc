@@ -16,6 +16,15 @@ the first run if necessary. Complete that installation and click Run again.
 
 Both `.c` and `.cpp` files are intentionally compiled as C++.
 
+The Windows package also includes [TXLib](https://github.com/ded32/TXLib).
+Programs can use it without additional setup or compiler flags:
+
+```cpp
+#include <TXLib.h>
+```
+
+TXLib is Windows-only and is not included in the macOS package.
+
 ## Usage
 
 1. Open a `.c` or `.cpp` file.

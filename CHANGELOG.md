@@ -4,6 +4,11 @@ All notable changes to the "dedinc" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.1.3]
+
+- Included the TXLib single-header graphics library in the Windows x64 package.
+- Added Windows packaging smoke tests for compiling and linking `#include <TXLib.h>`.
+
 ## [1.1.2]
 
 - Kept student-facing compiler errors separate from detailed diagnostic logs.

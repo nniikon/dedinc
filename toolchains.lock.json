@@ -2,7 +2,13 @@
   "win32-x64": {
     "distribution": "MSYS2 UCRT64",
     "package": "mingw-w64-ucrt-x86_64-gcc",
-    "version": "16.2.0-3"
+    "version": "16.2.0-3",
+    "txlib": {
+      "repository": "https://github.com/ded32/TXLib",
+      "commit": "adc8f17ae8c8601b9b555fbc8d4d2c09c6b9ff85",
+      "headerSha256": "a49b54506850572334f6c2e8e67fd9702ba0ed6998b4badf2ce8cad62dcd9b82",
+      "licenseSha256": "ee2e8e7864753f7531075f471bfc69bd746305c8f5b66783e9c3c05f646f0761"
+    }
   },
   "darwin-arm64": {
     "distribution": "Apple Command Line Tools",
