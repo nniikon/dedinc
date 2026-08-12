@@ -12,6 +12,7 @@ import {
 } from "./compiler";
 
 let activeExecution: vscode.TaskExecution | undefined;
+let activeStandaloneTerminal: vscode.Terminal | undefined;
 let outputChannel: vscode.OutputChannel;
 let compilationInProgress = false;
 
@@ -45,72 +46,87 @@ function diagnosticValue(value: string): string {
 	return value.length > 0 ? value.trimEnd() : "<empty>";
 }
 
-async function appendCompilerDiagnostics(
+async function writeCompilerDiagnostics(
+	context: vscode.ExtensionContext,
 	invocation: CompilerInvocation,
 	args: readonly string[],
 	cwd: string,
 	result?: { code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string },
 	error?: unknown
-): Promise<void> {
-	outputChannel.appendLine("");
-	outputChannel.appendLine("=== DedInC compilation diagnostics ===");
-	outputChannel.appendLine(`Platform: ${process.platform}-${process.arch}`);
-	outputChannel.appendLine(`VS Code: ${vscode.version}`);
-	outputChannel.appendLine(`Compiler: ${invocation.command}`);
-	outputChannel.appendLine(`Compiler exists: ${fs.existsSync(invocation.command)}`);
-	outputChannel.appendLine(
-		`Bundled compiler bin added to PATH: ${invocation.bundled ? path.dirname(invocation.command) : "not applicable"}`
-	);
-	outputChannel.appendLine(`Working directory: ${cwd}`);
-	outputChannel.appendLine(`Working directory exists: ${fs.existsSync(cwd)}`);
-	outputChannel.appendLine(`Arguments: ${JSON.stringify(args, null, 2)}`);
+): Promise<vscode.Uri | undefined> {
+	const lines = [
+		"=== DedInC compilation diagnostics ===",
+		`Time: ${new Date().toISOString()}`,
+		`Platform: ${process.platform}-${process.arch}`,
+		`VS Code: ${vscode.version}`,
+		`Compiler: ${invocation.command}`,
+		`Compiler exists: ${fs.existsSync(invocation.command)}`,
+		`Bundled compiler bin added to PATH: ${invocation.bundled ? path.dirname(invocation.command) : "not applicable"}`,
+		`Working directory: ${cwd}`,
+		`Working directory exists: ${fs.existsSync(cwd)}`,
+		`Arguments: ${JSON.stringify(args, null, 2)}`,
+	];
 	if (result) {
-		outputChannel.appendLine(`Exit code: ${result.code ?? "null"}`);
-		outputChannel.appendLine(`Signal: ${result.signal ?? "none"}`);
-		outputChannel.appendLine(`stdout: ${diagnosticValue(result.stdout)}`);
-		outputChannel.appendLine(`stderr: ${diagnosticValue(result.stderr)}`);
+		lines.push(
+			`Exit code: ${result.code ?? "null"}`,
+			`Signal: ${result.signal ?? "none"}`,
+			`stdout: ${diagnosticValue(result.stdout)}`,
+			`stderr: ${diagnosticValue(result.stderr)}`
+		);
 	}
 	if (error) {
 		const processError = error as NodeJS.ErrnoException;
-		outputChannel.appendLine(`Process error: ${processError.stack ?? String(error)}`);
-		outputChannel.appendLine(`Process error code: ${processError.code ?? "none"}`);
+		lines.push(
+			`Process error: ${processError.stack ?? String(error)}`,
+			`Process error code: ${processError.code ?? "none"}`
+		);
 	}
 
-	if (!invocation.bundled) {
-		return;
-	}
-
-	outputChannel.appendLine("");
-	outputChannel.appendLine("--- Bundled compiler self-test ---");
-	for (const probeArgs of [
-		["--version"],
-		["-print-search-dirs"],
-		["-print-prog-name=cc1plus"],
-		["-print-prog-name=as"],
-		["-print-prog-name=ld"],
-	]) {
-		try {
-			const probe = await runCompilerProcess(invocation, probeArgs, cwd);
-			outputChannel.appendLine(`$ g++ ${probeArgs.join(" ")}`);
-			outputChannel.appendLine(`exit=${probe.code ?? "null"}, signal=${probe.signal ?? "none"}`);
-			if (probe.stdout) {
-				outputChannel.appendLine(`stdout: ${diagnosticValue(probe.stdout)}`);
+	if (invocation.bundled) {
+		lines.push("", "--- Bundled compiler self-test ---");
+		for (const probeArgs of [
+			["--version"],
+			["-print-search-dirs"],
+			["-print-prog-name=cc1plus"],
+			["-print-prog-name=as"],
+			["-print-prog-name=ld"],
+		]) {
+			lines.push(`$ g++ ${probeArgs.join(" ")}`);
+			try {
+				const probe = await runCompilerProcess(invocation, probeArgs, cwd);
+				lines.push(`exit=${probe.code ?? "null"}, signal=${probe.signal ?? "none"}`);
+				if (probe.stdout) {
+					lines.push(`stdout: ${diagnosticValue(probe.stdout)}`);
+				}
+				if (probe.stderr) {
+					lines.push(`stderr: ${diagnosticValue(probe.stderr)}`);
+				}
+			} catch (probeError) {
+				lines.push(`could not start: ${(probeError as Error).message}`);
 			}
-			if (probe.stderr) {
-				outputChannel.appendLine(`stderr: ${diagnosticValue(probe.stderr)}`);
-			}
-		} catch (probeError) {
-			outputChannel.appendLine(`$ g++ ${probeArgs.join(" ")}`);
-			outputChannel.appendLine(`could not start: ${(probeError as Error).message}`);
 		}
+	}
+
+	try {
+		await vscode.workspace.fs.createDirectory(context.logUri);
+		const logUri = vscode.Uri.joinPath(context.logUri, "last-compilation.log");
+		await vscode.workspace.fs.writeFile(logUri, Buffer.from(`${lines.join("\n")}\n`, "utf8"));
+		return logUri;
+	} catch {
+		return undefined;
 	}
 }
 
-async function showCompilationFailure(message: string): Promise<void> {
+async function showCompilationFailure(message: string, diagnosticLog?: vscode.Uri): Promise<void> {
 	outputChannel.show(true);
-	const action = await vscode.window.showErrorMessage(message, "Show Diagnostics");
-	if (action === "Show Diagnostics") {
-		outputChannel.show(false);
+	if (!diagnosticLog) {
+		await vscode.window.showErrorMessage(message);
+		return;
+	}
+	const action = await vscode.window.showErrorMessage(message, "Open Diagnostic Log");
+	if (action === "Open Diagnostic Log") {
+		const document = await vscode.workspace.openTextDocument(diagnosticLog);
+		await vscode.window.showTextDocument(document, { preview: true });
 	}
 }
 
@@ -175,6 +191,11 @@ async function removeOldOutput(outputPath: string): Promise<void> {
 }
 
 async function terminateActiveExecution(): Promise<void> {
+	if (activeStandaloneTerminal) {
+		activeStandaloneTerminal.dispose();
+		activeStandaloneTerminal = undefined;
+	}
+
 	const execution = activeExecution;
 	if (!execution) {
 		return;
@@ -202,13 +223,22 @@ async function terminateActiveExecution(): Promise<void> {
 
 async function executeProgram(sourcePath: string, executablePath: string): Promise<void> {
 	const workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(sourcePath));
-	const scope = workspaceFolder ?? vscode.TaskScope.Workspace;
+	if (!workspaceFolder) {
+		activeStandaloneTerminal = vscode.window.createTerminal({
+			name: "DedInC: Run C/C++ Code",
+			shellPath: executablePath,
+			cwd: path.dirname(sourcePath),
+		});
+		activeStandaloneTerminal.show(false);
+		return;
+	}
+
 	const execution = new vscode.ProcessExecution(executablePath, [], {
 		cwd: path.dirname(sourcePath),
 	});
 	const task = new vscode.Task(
 		{ type: "dedinc" },
-		scope,
+		workspaceFolder,
 		"Run C/C++ Code",
 		"DedInC",
 		execution
@@ -276,16 +306,25 @@ async function runCCode(context: vscode.ExtensionContext): Promise<void> {
 			outputChannel.append(result.stderr);
 		}
 		if (result.code !== 0 || !fs.existsSync(outputPath)) {
-			await appendCompilerDiagnostics(compiler, args, cwd, result);
+			const diagnosticLog = await writeCompilerDiagnostics(context, compiler, args, cwd, result);
 			await showCompilationFailure(
-				`Compilation failed (exit code ${result.code ?? "unknown"}). See the DedInC output for diagnostics.`
+				`Compilation failed (exit code ${result.code ?? "unknown"}).`,
+				diagnosticLog
 			);
 			return;
 		}
 		await executeProgram(sourcePath, outputPath);
 	} catch (error) {
-		await appendCompilerDiagnostics(compiler, args, cwd, undefined, error);
-		await showCompilationFailure(`DedInC failed: ${(error as Error).message}`);
+		const diagnosticLog = await writeCompilerDiagnostics(
+			context,
+			compiler,
+			args,
+			cwd,
+			undefined,
+			error
+		);
+		outputChannel.appendLine(`DedInC failed: ${(error as Error).message}`);
+		await showCompilationFailure(`DedInC failed: ${(error as Error).message}`, diagnosticLog);
 	} finally {
 		compilationInProgress = false;
 	}
@@ -300,10 +339,16 @@ export function activate(context: vscode.ExtensionContext): void {
 			if (event.execution === activeExecution) {
 				activeExecution = undefined;
 			}
+		}),
+		vscode.window.onDidCloseTerminal((terminal) => {
+			if (terminal === activeStandaloneTerminal) {
+				activeStandaloneTerminal = undefined;
+			}
 		})
 	);
 }
 
 export function deactivate(): void {
 	activeExecution?.terminate();
+	activeStandaloneTerminal?.dispose();
 }

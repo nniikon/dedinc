@@ -4,6 +4,11 @@ All notable changes to the "dedinc" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.1.2]
+
+- Kept student-facing compiler errors separate from detailed diagnostic logs.
+- Fixed running compiled programs when a file is opened without a workspace folder.
+
 ## [1.1.1]
 
 - Fixed bundled GCC subprocess and DLL lookup when running from VS Code on Windows.

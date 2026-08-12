@@ -20,15 +20,16 @@ Both `.c` and `.cpp` files are intentionally compiled as C++.
 
 1. Open a `.c` or `.cpp` file.
 2. Click **Run C/C++ Code** in the editor toolbar.
-3. Use the DedInC task terminal for program input and output.
+3. Use the DedInC integrated terminal for program input and output.
+
+The file may be opened either by itself or as part of a VS Code workspace.
 
 The generated program is `_run_DedInC.exe` on Windows and `_run_DedInC` on
 macOS, alongside the source file.
 
-If compilation fails, select **Show Diagnostics** in the error notification (or
-open **View: Toggle Output** and choose **DedInC**). The report includes the
-compiler path, working directory, exact argument array, captured output, exit
-status, and—on Windows—toolchain component lookup probes.
+If compilation fails, the **DedInC** output contains only the compiler messages.
+Technical details are saved separately in VS Code's extension log directory;
+select **Open Diagnostic Log** in the error notification to view them.
 
 ## Compiler flags
 
