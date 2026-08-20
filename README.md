@@ -8,11 +8,14 @@ input and output remain in VS Code's integrated terminal.
 | Platform | Compiler |
 | --- | --- |
 | Windows x64 | Bundled GCC/MinGW-w64 `g++` |
+| Linux x64 | System-installed `g++` found through `PATH` |
 | macOS ARM64 | Apple `clang++` from Command Line Tools |
 
 Installations from the VS Code Marketplace automatically receive the matching
-platform package. On macOS, DedInC opens Apple's Command Line Tools installer on
-the first run if necessary. Complete that installation and click Run again.
+platform package. Linux users must already have `g++` installed and available in
+`PATH`; DedInC does not install a Linux compiler. On macOS, DedInC opens Apple's
+Command Line Tools installer on the first run if necessary. Complete that
+installation and click Run again.
 
 Both `.c` and `.cpp` files are intentionally compiled as C++.
 
@@ -23,7 +26,7 @@ Programs can use it without additional setup or compiler flags:
 #include <TXLib.h>
 ```
 
-TXLib is Windows-only and is not included in the macOS package.
+TXLib is Windows-only and is not included in the Linux or macOS packages.
 
 ## Usage
 
@@ -34,7 +37,7 @@ TXLib is Windows-only and is not included in the macOS package.
 The file may be opened either by itself or as part of a VS Code workspace.
 
 The generated program is `_run_DedInC.exe` on Windows and `_run_DedInC` on
-macOS, alongside the source file.
+Linux and macOS, alongside the source file.
 
 If compilation fails, the **DedInC** output contains only the compiler messages.
 Technical details are saved separately in VS Code's extension log directory;
@@ -61,6 +64,7 @@ appended to them.
 ```sh
 pnpm install
 pnpm test
+pnpm package:platform -- linux-x64
 pnpm package:platform -- darwin-arm64
 ```
 
@@ -70,7 +74,7 @@ are defined in `.github/workflows/release-platforms.yml`.
 
 ## Current limitations
 
-- Only Windows x64 and macOS ARM64 are supported.
+- Only Windows x64, Linux x64, and macOS ARM64 are supported.
 - DedInC compiles one active source file; it does not replace a multi-file build
   system such as CMake or Make.
 - Unsaved editor changes are not compiled until the file is saved.

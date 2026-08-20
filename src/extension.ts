@@ -60,7 +60,7 @@ async function writeCompilerDiagnostics(
 		`Platform: ${process.platform}-${process.arch}`,
 		`VS Code: ${vscode.version}`,
 		`Compiler: ${invocation.command}`,
-		`Compiler exists: ${fs.existsSync(invocation.command)}`,
+		`Compiler file exists: ${invocation.bundled ? fs.existsSync(invocation.command) : "resolved through PATH"}`,
 		`Bundled compiler bin added to PATH: ${invocation.bundled ? path.dirname(invocation.command) : "not applicable"}`,
 		`Working directory: ${cwd}`,
 		`Working directory exists: ${fs.existsSync(cwd)}`,
@@ -137,6 +137,22 @@ async function ensureCompiler(invocation: CompilerInvocation): Promise<boolean> 
 		}
 		vscode.window.showErrorMessage(
 			`The DedInC compiler payload for ${invocation.target} is missing. Reinstall the platform-specific extension package.`
+		);
+		return false;
+	}
+
+	if (invocation.target === "linux-x64") {
+		try {
+			const probe = await runCompilerProcess(invocation, ["--version"], process.cwd());
+			if (probe.code === 0) {
+				return true;
+			}
+		} catch {
+			// Report the missing system compiler below.
+		}
+
+		vscode.window.showErrorMessage(
+			"DedInC could not find g++ in PATH. Install g++ with your Linux distribution's package manager, then try again."
 		);
 		return false;
 	}

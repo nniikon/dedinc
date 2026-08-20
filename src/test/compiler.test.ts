@@ -11,10 +11,18 @@ import {
 suite("Compiler configuration", () => {
 	test("resolves supported targets", () => {
 		assert.strictEqual(resolveTarget("win32", "x64"), "win32-x64");
+		assert.strictEqual(resolveTarget("linux", "x64"), "linux-x64");
 		assert.strictEqual(resolveTarget("darwin", "arm64"), "darwin-arm64");
-		assert.strictEqual(resolveTarget("linux", "x64"), undefined);
 		assert.strictEqual(resolveTarget("linux", "arm64"), undefined);
 		assert.strictEqual(resolveTarget("darwin", "x64"), undefined);
+	});
+
+	test("uses g++ from PATH on Linux", () => {
+		const linux = resolveCompiler("/extension", "linux", "x64");
+		assert.strictEqual(linux.command, "g++");
+		assert.deepStrictEqual(linux.prefixArgs, []);
+		assert.deepStrictEqual(linux.runtimeArgs, []);
+		assert.strictEqual(linux.bundled, false);
 	});
 
 	test("uses a packaged compiler on Windows", () => {
@@ -120,8 +128,8 @@ suite("Compiler configuration", () => {
 	});
 
 	test("does not modify the environment for a system compiler", () => {
-		const compiler = resolveCompiler("/extension", "darwin", "arm64");
+		const compiler = resolveCompiler("/extension", "linux", "x64");
 		const baseEnvironment = { PATH: "/usr/bin" };
-		assert.strictEqual(buildCompilerEnvironment(compiler, baseEnvironment, "darwin"), baseEnvironment);
+		assert.strictEqual(buildCompilerEnvironment(compiler, baseEnvironment, "linux"), baseEnvironment);
 	});
 });

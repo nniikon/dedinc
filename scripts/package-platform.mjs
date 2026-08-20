@@ -9,7 +9,7 @@ const root = join(scriptDirectory, "..");
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const toolchainsLock = JSON.parse(readFileSync(join(root, "toolchains.lock.json"), "utf8"));
 
-const supportedTargets = ["win32-x64", "darwin-arm64"];
+const supportedTargets = ["win32-x64", "linux-x64", "darwin-arm64"];
 const target = process.argv.slice(2).find((argument) => argument !== "--");
 if (!supportedTargets.includes(target)) {
 	console.error(`Usage: pnpm package:platform -- <${supportedTargets.join("|")}>`);
@@ -23,12 +23,12 @@ const stagedTargets = existsSync(toolchainsRoot)
 		.map((entry) => entry.name)
 	: [];
 
-if (target !== "darwin-arm64" && !stagedTargets.includes(target)) {
+if (target === "win32-x64" && !stagedTargets.includes(target)) {
 	console.error(`Missing staged compiler at toolchains/${target}.`);
 	process.exit(1);
 }
-if (target !== "darwin-arm64") {
-	const compilerName = target === "win32-x64" ? "g++.exe" : "g++";
+if (target === "win32-x64") {
+	const compilerName = "g++.exe";
 	const compilerPath = join(toolchainsRoot, target, "bin", compilerName);
 	if (!existsSync(compilerPath)) {
 		console.error(`Missing staged compiler executable: ${compilerPath}`);

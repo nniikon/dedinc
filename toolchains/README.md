@@ -5,6 +5,7 @@ README is tracked.
 
 - `win32-x64/` is a staged MSYS2 UCRT64 GCC 16.2 toolchain. Its include root
   also contains the pinned TXLib single-header graphics library.
+- `linux-x64` has no payload; DedInC finds a system-installed `g++` in `PATH`.
 - `darwin-arm64` has no payload; DedInC invokes Apple Command Line Tools through
   `xcrun`.
 

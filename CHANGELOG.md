@@ -4,6 +4,10 @@ All notable changes to the "dedinc" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [Unreleased]
+
+- Restored Linux x64 support using an existing `g++` from `PATH`, without installing or bundling a Linux toolchain.
+
 ## [1.1.3]
 
 - Included the TXLib single-header graphics library in the Windows x64 package.

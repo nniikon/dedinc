@@ -2,7 +2,7 @@ import * as path from "path";
 
 export const DEFAULT_COMPILER_FLAGS = ["-Wall", "-Wextra", "-g"] as const;
 
-export type SupportedTarget = "win32-x64" | "darwin-arm64";
+export type SupportedTarget = "win32-x64" | "linux-x64" | "darwin-arm64";
 
 export interface CompilerInvocation {
 	command: string;
@@ -19,6 +19,9 @@ export function resolveTarget(
 	if (platform === "win32" && arch === "x64") {
 		return "win32-x64";
 	}
+	if (platform === "linux" && arch === "x64") {
+		return "linux-x64";
+	}
 	if (platform === "darwin" && arch === "arm64") {
 		return "darwin-arm64";
 	}
@@ -33,8 +36,18 @@ export function resolveCompiler(
 	const target = resolveTarget(platform, arch);
 	if (!target) {
 		throw new Error(
-			`DedInC does not support ${platform}-${arch}. Supported targets are Windows x64 and macOS ARM64.`
+			`DedInC does not support ${platform}-${arch}. Supported targets are Windows x64, Linux x64, and macOS ARM64.`
 		);
+	}
+
+	if (target === "linux-x64") {
+		return {
+			command: "g++",
+			prefixArgs: [],
+			runtimeArgs: [],
+			target,
+			bundled: false,
+		};
 	}
 
 	if (target === "darwin-arm64") {
