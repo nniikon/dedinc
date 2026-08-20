@@ -178,6 +178,13 @@
 				}
 			}
 		],
+		"keybindings": [
+			{
+				"command": "dedinc.runCCode",
+				"key": "f9",
+				"when": "editorTextFocus && (editorLangId == c || editorLangId == cpp)"
+			}
+		],
 		"menus": {
 			"editor/title": [
 				{

@@ -31,7 +31,7 @@ TXLib is Windows-only and is not included in the Linux or macOS packages.
 ## Usage
 
 1. Open a `.c` or `.cpp` file.
-2. Click **Run C/C++ Code** in the editor toolbar.
+2. Press **F9** or click **Run C/C++ Code** in the editor toolbar.
 3. Use the DedInC integrated terminal for program input and output.
 
 The file may be opened either by itself or as part of a VS Code workspace.
