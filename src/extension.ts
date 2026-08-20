@@ -5,10 +5,15 @@ import * as fs from "fs";
 import {
 	buildCompilerArgs,
 	buildCompilerEnvironment,
+	combineCompilerFlags,
 	DEFAULT_COMPILER_FLAGS,
+	DEFAULT_LINUX_COMPILER_FLAGS,
+	DEFAULT_MACOS_COMPILER_FLAGS,
+	DEFAULT_WINDOWS_COMPILER_FLAGS,
 	outputPathFor,
 	resolveCompiler,
 	type CompilerInvocation,
+	type SupportedTarget,
 } from "./compiler";
 
 let activeExecution: vscode.TaskExecution | undefined;
@@ -185,15 +190,43 @@ async function ensureCompiler(invocation: CompilerInvocation): Promise<boolean> 
 	return false;
 }
 
-function configuredFlags(resource: vscode.Uri): string[] | undefined {
+function configuredFlagArray(
+	resource: vscode.Uri,
+	setting: string,
+	defaultValue: readonly string[]
+): string[] | undefined {
 	const value = vscode.workspace
 		.getConfiguration("dedinc", resource)
-		.get<unknown>("compilerFlags", [...DEFAULT_COMPILER_FLAGS]);
+		.get<unknown>(setting, [...defaultValue]);
 	if (!Array.isArray(value) || !value.every((flag) => typeof flag === "string")) {
-		vscode.window.showErrorMessage("dedinc.compilerFlags must be an array of strings.");
+		vscode.window.showErrorMessage(`dedinc.${setting} must be an array of strings.`);
 		return undefined;
 	}
 	return value;
+}
+
+function configuredFlags(resource: vscode.Uri, target: SupportedTarget): string[] | undefined {
+	const commonFlags = configuredFlagArray(resource, "compilerFlags", DEFAULT_COMPILER_FLAGS);
+	if (!commonFlags) {
+		return undefined;
+	}
+
+	const platformSetting = target === "win32-x64"
+		? "windowsCompilerFlags"
+		: target === "linux-x64"
+			? "linuxCompilerFlags"
+			: "macosCompilerFlags";
+	const platformDefaults = target === "win32-x64"
+		? DEFAULT_WINDOWS_COMPILER_FLAGS
+		: target === "linux-x64"
+			? DEFAULT_LINUX_COMPILER_FLAGS
+			: DEFAULT_MACOS_COMPILER_FLAGS;
+	const platformFlags = configuredFlagArray(resource, platformSetting, platformDefaults);
+	if (!platformFlags) {
+		return undefined;
+	}
+
+	return combineCompilerFlags(commonFlags, platformFlags);
 }
 
 async function removeOldOutput(outputPath: string): Promise<void> {
@@ -293,7 +326,7 @@ async function runCCode(context: vscode.ExtensionContext): Promise<void> {
 		return;
 	}
 
-	const flags = configuredFlags(editor.document.uri);
+	const flags = configuredFlags(editor.document.uri, compiler.target);
 	if (!flags) {
 		return;
 	}

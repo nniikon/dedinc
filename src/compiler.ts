@@ -1,6 +1,116 @@
 import * as path from "path";
 
-export const DEFAULT_COMPILER_FLAGS = ["-Wall", "-Wextra", "-g"] as const;
+export const DEFAULT_COMPILER_FLAGS = [
+	"-Wshadow",
+	"-Winit-self",
+	"-Wredundant-decls",
+	"-Wcast-align",
+	"-Wundef",
+	"-Wfloat-equal",
+	"-Winline",
+	"-Wunreachable-code",
+	"-Wmissing-declarations",
+	"-Wswitch-enum",
+	"-Wswitch-default",
+	"-Weffc++",
+	"-Wextra",
+	"-Wall",
+	"-Wcast-qual",
+	"-Wconversion",
+	"-Wctor-dtor-privacy",
+	"-Wempty-body",
+	"-Wformat-security",
+	"-Wformat=2",
+	"-Wno-missing-field-initializers",
+	"-Wnon-virtual-dtor",
+	"-Woverloaded-virtual",
+	"-Wpointer-arith",
+	"-Wsign-promo",
+	"-Werror=vla",
+	"-D_DEBUG",
+] as const;
+
+export const DEFAULT_WINDOWS_COMPILER_FLAGS = [
+	"-Wmissing-include-dirs",
+	"-Wmain",
+	"-g",
+	"-pipe",
+	"-fexceptions",
+	"-Wignored-qualifiers",
+	"-Wlogical-op",
+	"-Wstack-usage=8192",
+	"-Wstrict-aliasing",
+	"-Wstrict-null-sentinel",
+	"-Wtype-limits",
+	"-Wwrite-strings",
+	"-D_EJUDGE_CLIENT_SIDE",
+] as const;
+
+export const DEFAULT_LINUX_COMPILER_FLAGS = [
+	"-ggdb3",
+	"-std=c++17",
+	"-Waggressive-loop-optimizations",
+	"-Wc++14-compat",
+	"-Wchar-subscripts",
+	"-Wconditionally-supported",
+	"-Wformat-nonliteral",
+	"-Wformat-signedness",
+	"-Wlogical-op",
+	"-Wopenmp-simd",
+	"-Wpacked",
+	"-Wsign-conversion",
+	"-Wstrict-null-sentinel",
+	"-Wstrict-overflow=2",
+	"-Wsuggest-attribute=noreturn",
+	"-Wsuggest-final-methods",
+	"-Wsuggest-final-types",
+	"-Wsuggest-override",
+	"-Wsync-nand",
+	"-Wunused",
+	"-Wuseless-cast",
+	"-Wvariadic-macros",
+	"-Wno-literal-suffix",
+	"-Wno-narrowing",
+	"-Wno-old-style-cast",
+	"-Wno-varargs",
+	"-Wstack-protector",
+	"-fcheck-new",
+	"-fsized-deallocation",
+	"-fstack-protector",
+	"-fstrict-overflow",
+	"-flto-odr-type-merging",
+	"-fno-omit-frame-pointer",
+	"-pie",
+	"-fPIE",
+	"-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,leak,nonnull-attribute,null,object-size,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr",
+] as const;
+
+export const DEFAULT_MACOS_COMPILER_FLAGS = [
+	"-ggdb3",
+	"-std=c++17",
+	"-Wc++14-compat",
+	"-Wchar-subscripts",
+	"-Wformat-nonliteral",
+	"-Wformat-signedness",
+	"-Wpacked",
+	"-Wsign-conversion",
+	"-Wstrict-overflow=2",
+	"-Wsuggest-override",
+	"-Wunused",
+	"-Wvariadic-macros",
+	"-Wno-narrowing",
+	"-Wno-old-style-cast",
+	"-Wno-varargs",
+	"-Wstack-protector",
+	"-fcheck-new",
+	"-fsized-deallocation",
+	"-fstack-protector",
+	"-fstrict-overflow",
+	"-fno-omit-frame-pointer",
+	"-Wlarger-than=8192",
+	"-fPIE",
+	"-fsanitize=address,alignment,bool,bounds,enum,float-cast-overflow,float-divide-by-zero,integer-divide-by-zero,nonnull-attribute,null,return,returns-nonnull-attribute,shift,signed-integer-overflow,undefined,unreachable,vla-bound,vptr",
+] as const;
 
 export type SupportedTarget = "win32-x64" | "linux-x64" | "darwin-arm64";
 
@@ -10,6 +120,13 @@ export interface CompilerInvocation {
 	runtimeArgs: string[];
 	target: SupportedTarget;
 	bundled: boolean;
+}
+
+export function combineCompilerFlags(
+	commonFlags: readonly string[],
+	platformFlags: readonly string[]
+): string[] {
+	return [...commonFlags, ...platformFlags];
 }
 
 export function resolveTarget(

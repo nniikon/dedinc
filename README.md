@@ -45,19 +45,23 @@ select **Open Diagnostic Log** in the error notification to view them.
 
 ## Compiler flags
 
-Set `dedinc.compilerFlags` at user, workspace, or workspace-folder scope. Each
-array entry is passed as exactly one compiler argument, so flags containing
-spaces do not require shell escaping.
+Compiler flags are split into a common list and an operating-system-specific
+list. DedInC passes `dedinc.compilerFlags` first, followed by exactly one of
+`dedinc.windowsCompilerFlags`, `dedinc.linuxCompilerFlags`, or
+`dedinc.macosCompilerFlags`. All four settings can be changed at user,
+workspace, or workspace-folder scope. Each array entry is passed as exactly one
+compiler argument, so flags containing spaces do not require shell escaping.
 
 ```json
 {
-  "dedinc.compilerFlags": ["-Wall", "-Wextra", "-g", "-std=c++23"]
+  "dedinc.compilerFlags": ["-Wall", "-Wextra"],
+  "dedinc.linuxCompilerFlags": ["-g", "-std=c++23"]
 }
 ```
 
-The default is `-Wall`, `-Wextra`, and `-g`. Set the value to `[]` to pass no
-optional flags. The configured array replaces the defaults rather than being
-appended to them.
+Each configured array replaces that setting's prefilled defaults. Set both the
+common array and the active operating system's array to `[]` to pass no optional
+flags.
 
 ## Development and packaging
 

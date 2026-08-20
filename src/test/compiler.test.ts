@@ -1,14 +1,79 @@
 import * as assert from "assert";
+import * as fs from "fs";
 import * as path from "path";
 import {
 	buildCompilerArgs,
 	buildCompilerEnvironment,
+	combineCompilerFlags,
+	DEFAULT_COMPILER_FLAGS,
+	DEFAULT_LINUX_COMPILER_FLAGS,
+	DEFAULT_MACOS_COMPILER_FLAGS,
+	DEFAULT_WINDOWS_COMPILER_FLAGS,
 	outputPathFor,
 	resolveCompiler,
 	resolveTarget,
 } from "../compiler";
 
 suite("Compiler configuration", () => {
+	test("keeps manifest defaults synchronized with compiler defaults", () => {
+		const packageJson = JSON.parse(
+			fs.readFileSync(path.resolve(__dirname, "../../package.json"), "utf8")
+		) as {
+			contributes: {
+				configuration: {
+					properties: Record<string, { default: string[] }>;
+				};
+			};
+		};
+		const properties = packageJson.contributes.configuration.properties;
+		assert.deepStrictEqual(properties["dedinc.compilerFlags"].default, [
+			...DEFAULT_COMPILER_FLAGS,
+		]);
+		assert.deepStrictEqual(properties["dedinc.windowsCompilerFlags"].default, [
+			...DEFAULT_WINDOWS_COMPILER_FLAGS,
+		]);
+		assert.deepStrictEqual(properties["dedinc.linuxCompilerFlags"].default, [
+			...DEFAULT_LINUX_COMPILER_FLAGS,
+		]);
+		assert.deepStrictEqual(properties["dedinc.macosCompilerFlags"].default, [
+			...DEFAULT_MACOS_COMPILER_FLAGS,
+		]);
+	});
+
+	test("partitions the default flags into common and platform-specific lists", () => {
+		assert.strictEqual(DEFAULT_COMPILER_FLAGS.length, 27);
+		assert.strictEqual(DEFAULT_WINDOWS_COMPILER_FLAGS.length, 13);
+		assert.strictEqual(DEFAULT_LINUX_COMPILER_FLAGS.length, 36);
+		assert.strictEqual(DEFAULT_MACOS_COMPILER_FLAGS.length, 24);
+
+		for (const platformFlags of [
+			DEFAULT_WINDOWS_COMPILER_FLAGS,
+			DEFAULT_LINUX_COMPILER_FLAGS,
+			DEFAULT_MACOS_COMPILER_FLAGS,
+		]) {
+			const combined = combineCompilerFlags(DEFAULT_COMPILER_FLAGS, platformFlags);
+			assert.strictEqual(new Set(combined).size, combined.length);
+		}
+
+		assert.ok(DEFAULT_COMPILER_FLAGS.includes("-D_DEBUG"));
+		assert.ok(DEFAULT_WINDOWS_COMPILER_FLAGS.includes("-D_EJUDGE_CLIENT_SIDE"));
+		assert.ok(DEFAULT_LINUX_COMPILER_FLAGS.includes("-flto-odr-type-merging"));
+		assert.ok(DEFAULT_MACOS_COMPILER_FLAGS.includes("-Wlarger-than=8192"));
+	});
+
+	test("combines common flags before the active platform flags", () => {
+		const common = ["-Wall", "-DDEBUG"];
+		const platform = ["-std=c++17", "-g"];
+		assert.deepStrictEqual(combineCompilerFlags(common, platform), [
+			"-Wall",
+			"-DDEBUG",
+			"-std=c++17",
+			"-g",
+		]);
+		assert.deepStrictEqual(common, ["-Wall", "-DDEBUG"]);
+		assert.deepStrictEqual(platform, ["-std=c++17", "-g"]);
+	});
+
 	test("resolves supported targets", () => {
 		assert.strictEqual(resolveTarget("win32", "x64"), "win32-x64");
 		assert.strictEqual(resolveTarget("linux", "x64"), "linux-x64");
